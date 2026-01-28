@@ -1,0 +1,855 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { Clock, CheckCircle, AlertCircle, BookOpen, FileText, Send, User, Shield, Network, Globe, Lock } from 'lucide-react';
+
+/**
+ * PENGATURAN JADWAL UJIAN
+ * Ganti tanggal dan jam di bawah ini sesuai jadwal pelaksanaan.
+ * Format: YYYY-MM-DDTHH:MM:SS
+ * Contoh: "2026-01-28T08:00:00" artinya 28 Januari 2026 jam 08.00 Pagi
+ */
+const JADWAL_UJIAN = new Date("2026-01-28T07:00:00"); 
+
+/**
+ * DATA SOAL (BANK SOAL) - TETAP SAMA
+ */
+const QUESTION_BANK = [
+  // --- TOPIC: PENGERTIAN & KONSEP DASAR ---
+  {
+    id: 1,
+    topic: "Pengertian Jaringan",
+    level: "C1",
+    type: "single",
+    question: "Apa tujuan utama dari dibangunnya sebuah jaringan komputer?",
+    options: [
+      "Agar komputer terlihat canggih",
+      "Untuk berbagi sumber daya (data, printer, koneksi) antar perangkat",
+      "Hanya untuk bermain game online",
+      "Untuk menghabiskan kuota internet"
+    ],
+    correctAnswer: [1]
+  },
+  {
+    id: 2,
+    topic: "Pengertian Jaringan",
+    level: "C2",
+    type: "single",
+    question: "Manakah pernyataan yang PALING TEPAT menggambarkan hubungan antara Server dan Client?",
+    options: [
+      "Server meminta layanan, Client melayani",
+      "Server dan Client tidak saling berhubungan",
+      "Server menyediakan layanan/data, Client mengakses/meminta layanan tersebut",
+      "Server hanya untuk internet, Client hanya untuk mengetik"
+    ],
+    correctAnswer: [2]
+  },
+  // --- TOPIC: TIPE JARINGAN (LAN, MAN, WAN) ---
+  {
+    id: 3,
+    topic: "Tipe Jaringan",
+    level: "C3",
+    type: "single",
+    question: "Pak Budi ingin menghubungkan 10 komputer dalam satu ruang laboratorium sekolah. Jenis jaringan apa yang paling tepat diterapkan?",
+    options: ["WAN (Wide Area Network)", "MAN (Metropolitan Area Network)", "LAN (Local Area Network)", "Internet"],
+    correctAnswer: [2]
+  },
+  {
+    id: 4,
+    topic: "Tipe Jaringan",
+    level: "C4",
+    type: "complex",
+    question: "Analisis karakteristik WAN (Wide Area Network). Pilihlah DUA pernyataan yang benar!",
+    options: [
+      "Mencakup wilayah geografis yang sangat luas (negara/benua)",
+      "Hanya mencakup satu gedung sekolah",
+      "Membutuhkan router dan infrastruktur publik/satelit",
+      "Kecepatan transfer datanya pasti lebih cepat dari LAN kabel"
+    ],
+    correctAnswer: [0, 2]
+  },
+  {
+    id: 5,
+    topic: "Tipe Jaringan",
+    level: "C1",
+    type: "single",
+    question: "Jaringan yang menghubungkan komputer di seluruh dunia tanpa batas geografis disebut...",
+    options: ["Intranet", "Internet", "Ekstranet", "Lokalnet"],
+    correctAnswer: [1]
+  },
+  // --- TOPIC: JENIS KONEKSI ---
+  {
+    id: 6,
+    topic: "Jenis Koneksi",
+    level: "C2",
+    type: "complex",
+    question: "Manakah dari berikut ini yang merupakan media transmisi jaringan NIRKABEL (Wireless)? Pilih dua jawaban.",
+    options: [
+      "Kabel Fiber Optik",
+      "Gelombang Radio (Wi-Fi)",
+      "Kabel Coaxial",
+      "Bluetooth"
+    ],
+    correctAnswer: [1, 3]
+  },
+  {
+    id: 7,
+    topic: "Jenis Koneksi",
+    level: "C3",
+    type: "single",
+    question: "Kamu sedang berada di kafe dan ingin menghubungkan laptop ke internet tanpa menggunakan kabel. Fitur apa yang harus kamu aktifkan di laptop?",
+    options: ["Ethernet", "Wi-Fi", "Bluetooth", "NFC"],
+    correctAnswer: [1]
+  },
+  {
+    id: 8,
+    topic: "Jenis Koneksi",
+    level: "C4",
+    type: "single",
+    question: "Jika dibandingkan antara kabel Fiber Optik dan kabel Tembaga (UTP), mengapa Fiber Optik lebih unggul untuk jarak jauh?",
+    options: [
+      "Karena lebih murah harganya",
+      "Karena menggunakan sinyal listrik yang kuat",
+      "Karena menggunakan cahaya sehingga minim gangguan dan sangat cepat",
+      "Karena kabelnya lebih besar dan berat"
+    ],
+    correctAnswer: [2]
+  },
+  {
+    id: 9,
+    topic: "Jenis Koneksi",
+    level: "C5",
+    type: "single",
+    question: "Sebuah sekolah di pedalaman tidak terjangkau kabel telepon maupun fiber optik. Apa solusi koneksi internet yang paling logis untuk dievaluasi penggunaannya?",
+    options: ["Dial-up", "VSAT (Satelit)", "Kabel LAN", "Bluetooth Tethering"],
+    correctAnswer: [1]
+  },
+  {
+    id: 10,
+    topic: "Jenis Koneksi",
+    level: "C1",
+    type: "single",
+    question: "Tethering adalah istilah untuk...",
+    options: [
+      "Mematikan internet",
+      "Berbagi koneksi internet dari HP ke perangkat lain",
+      "Mengunci data dengan password",
+      "Membersihkan virus"
+    ],
+    correctAnswer: [1]
+  },
+  // --- TOPIC: ENKRIPSI ---
+  {
+    id: 11,
+    topic: "Enkripsi",
+    level: "C1",
+    type: "single",
+    question: "Apa itu Enkripsi?",
+    options: [
+      "Proses menghapus data virus",
+      "Proses mengubah data menjadi kode acak agar tidak bisa dibaca orang lain",
+      "Proses mempercepat koneksi internet",
+      "Proses menyalakan komputer jarak jauh"
+    ],
+    correctAnswer: [1]
+  },
+  {
+    id: 12,
+    topic: "Enkripsi",
+    level: "C3",
+    type: "single",
+    question: "Saat membuka website perbankan, kamu melihat ikon 'Gembok' dan protokol 'HTTPS'. Apa artinya?",
+    options: [
+      "Website sedang dikunci admin",
+      "Koneksi antara kamu dan website terenkripsi (aman)",
+      "Website tidak bisa dibuka",
+      "Internet kamu sedang lambat"
+    ],
+    correctAnswer: [1]
+  },
+  {
+    id: 13,
+    topic: "Enkripsi",
+    level: "C4",
+    type: "single",
+    question: "Jika Ani mengirim pesan WA ke Budi, dan pesan itu disadap oleh hacker di tengah jalan tetapi hacker hanya melihat kode acak, teknologi apa yang bekerja?",
+    options: ["End-to-End Encryption", "Firewall Protection", "Antivirus Scan", "Bluetooth Pairing"],
+    correctAnswer: [0]
+  },
+  {
+    id: 14,
+    topic: "Enkripsi",
+    level: "C2",
+    type: "single",
+    question: "Caesar Cipher adalah contoh sederhana dari teknik...",
+    options: ["Kompresi", "Koneksi", "Kriptografi (Enkripsi)", "Topologi"],
+    correctAnswer: [2]
+  },
+  // --- TOPIC: PROTEKSI DATA & FILE ---
+  {
+    id: 15,
+    topic: "Proteksi Data",
+    level: "C6",
+    type: "complex",
+    question: "Kamu diminta merancang kebijakan password yang kuat untuk email kelas. Pilih TIGA kriteria password yang kuat!",
+    options: [
+      "Minimal 8 karakter",
+      "Hanya menggunakan tanggal lahir agar mudah diingat",
+      "Kombinasi huruf besar, kecil, angka, dan simbol",
+      "Tidak menggunakan kata umum (seperti 'password123')",
+      "Sama dengan nama pengguna"
+    ],
+    correctAnswer: [0, 2, 3]
+  },
+  {
+    id: 16,
+    topic: "Proteksi Data",
+    level: "C2",
+    type: "single",
+    question: "Apa fungsi utama dari Firewall dalam jaringan komputer?",
+    options: [
+      "Memadamkan api jika komputer panas",
+      "Memeriksa dan memfilter lalu lintas data yang masuk/keluar untuk keamanan",
+      "Mempercepat download file",
+      "Menyimpan data cadangan"
+    ],
+    correctAnswer: [1]
+  },
+  {
+    id: 17,
+    topic: "Proteksi Data",
+    level: "C5",
+    type: "complex",
+    question: "Seorang siswa mendapati komputernya menjadi sangat lambat dan muncul banyak iklan pop-up aneh. Evaluasi kemungkinan penyebabnya (Pilih dua)!",
+    options: [
+      "Komputer terinfeksi Malware/Adware",
+      "Koneksi internet terlalu cepat",
+      "Siswa mengklik link phishing sembarangan",
+      "Monitor komputer rusak"
+    ],
+    correctAnswer: [0, 2]
+  },
+  // --- TOPIC: CAMPURAN & PENALARAN (C4-C6) ---
+  {
+    id: 18,
+    topic: "Analisis Jaringan",
+    level: "C4",
+    type: "single",
+    question: "Mengapa streaming video HD membutuhkan bandwidth yang lebih besar daripada sekadar mengirim email?",
+    options: [
+      "Karena email lebih penting",
+      "Karena data video ukurannya jauh lebih besar dan butuh transfer realtime",
+      "Karena video warnanya cerah",
+      "Karena email menggunakan kabel, video menggunakan wifi"
+    ],
+    correctAnswer: [1]
+  },
+  {
+    id: 19,
+    topic: "Topologi",
+    level: "C3",
+    type: "single",
+    question: "Dalam sebuah lab, jika satu kabel putus maka seluruh komputer tidak bisa terkoneksi. Ini adalah kelemahan ciri khas topologi...",
+    options: ["Star", "Bus", "Mesh", "Tree"],
+    correctAnswer: [1]
+  },
+  {
+    id: 20,
+    topic: "Perangkat Keras",
+    level: "C2",
+    type: "complex",
+    question: "Pilih DUA perangkat keras yang berfungsi sebagai penghubung dalam jaringan kabel!",
+    options: ["Switch", "Router", "Flashdisk", "Harddisk"],
+    correctAnswer: [0, 1]
+  },
+  {
+    id: 21,
+    topic: "ISP",
+    level: "C1",
+    type: "single",
+    question: "Perusahaan penyedia jasa layanan internet (seperti Telkom, Biznet, dll) disebut...",
+    options: ["WWW", "ISP (Internet Service Provider)", "HTTP", "URL"],
+    correctAnswer: [1]
+  },
+  {
+    id: 22,
+    topic: "Sinyal",
+    level: "C2",
+    type: "single",
+    question: "Modem berfungsi untuk...",
+    options: [
+      "Menyimpan data",
+      "Mengubah sinyal digital menjadi analog dan sebaliknya",
+      "Mencetak dokumen",
+      "Mendinginkan CPU"
+    ],
+    correctAnswer: [1]
+  },
+  {
+    id: 23,
+    topic: "Keamanan",
+    level: "C5",
+    type: "single",
+    question: "Kamu menerima email dari 'Bank' meminta PIN dan password. Tindakan yang paling tepat untuk mengevaluasi keamanan adalah...",
+    options: [
+      "Langsung membalas karena takut rekening diblokir",
+      "Mengabaikan dan menghapusnya karena bank tidak pernah minta password via email (Phishing)",
+      "Meneruskan email ke teman",
+      "Mengklik link di dalamnya untuk memastikan"
+    ],
+    correctAnswer: [1]
+  },
+  {
+    id: 24,
+    topic: "Desain Jaringan",
+    level: "C6",
+    type: "complex",
+    question: "Jika kamu diminta membuat jaringan hotspot di rumah 2 lantai agar sinyal merata, alat apa yang perlu ditambahkan jika 1 router tidak cukup menjangkau lantai 2? (Pilih dua solusi)",
+    options: [
+      "Wi-Fi Extender / Repeater",
+      "Access Point tambahan",
+      "Kabel VGA",
+      "Printer Network"
+    ],
+    correctAnswer: [0, 1]
+  },
+  {
+    id: 25,
+    topic: "Identifikasi",
+    level: "C1",
+    type: "single",
+    question: "Alamat unik yang dimiliki setiap perangkat jaringan agar bisa dikenali disebut...",
+    options: ["IP Address", "Email Address", "Home Address", "Web Address"],
+    correctAnswer: [0]
+  }
+];
+
+// --- APP COMPONENT ---
+
+export default function InformatikaExamApp() {
+  // State Management
+  const [step, setStep] = useState('intro'); // intro, form, exam, result
+  const [studentData, setStudentData] = useState({
+    name: '',
+    class: '',
+    absentNo: '',
+    parentPhone: ''
+  });
+  
+  const [questions, setQuestions] = useState([]);
+  const [currentQIndex, setCurrentQIndex] = useState(0);
+  const [timeLeft, setTimeLeft] = useState(30);
+  const [answers, setAnswers] = useState({}); // { qId: [selectedIndices] }
+  const [examResult, setExamResult] = useState(null);
+  const [isExamOpen, setIsExamOpen] = useState(false);
+  const [timeRemaining, setTimeRemaining] = useState('');
+  
+  // Timer Reference
+  const timerRef = useRef(null);
+  const scheduleIntervalRef = useRef(null);
+
+  // --- UTILS ---
+
+  // Shuffle Array (Fisher-Yates)
+  const shuffleArray = (array) => {
+    let currentIndex = array.length, randomIndex;
+    while (currentIndex !== 0) {
+      randomIndex = Math.floor(Math.random() * currentIndex);
+      currentIndex--;
+      [array[currentIndex], array[randomIndex]] = [
+        array[randomIndex], array[currentIndex]];
+    }
+    return array;
+  };
+
+  // Check Schedule
+  useEffect(() => {
+    const checkSchedule = () => {
+      const now = new Date();
+      if (now >= JADWAL_UJIAN) {
+        setIsExamOpen(true);
+      } else {
+        setIsExamOpen(false);
+        // Calculate remaining time for display
+        const diff = JADWAL_UJIAN - now;
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+        const minutes = Math.floor((diff / 1000 / 60) % 60);
+        const seconds = Math.floor((diff / 1000) % 60);
+        setTimeRemaining(`${days}h ${hours}j ${minutes}m ${seconds}d`);
+      }
+    };
+
+    checkSchedule();
+    scheduleIntervalRef.current = setInterval(checkSchedule, 1000);
+
+    return () => clearInterval(scheduleIntervalRef.current);
+  }, []);
+
+  // --- HANDLERS ---
+
+  const handleStartExam = (e) => {
+    e.preventDefault();
+    if (!studentData.name || !studentData.class || !studentData.parentPhone) {
+      alert("Mohon lengkapi data diri!");
+      return;
+    }
+
+    if (!isExamOpen) {
+      alert("Waktu ujian belum dimulai!");
+      return;
+    }
+
+    // CEK STATUS PENGERJAAN (Satu Kali Kesempatan)
+    // Key unik: exam_status_KELAS_NOABSEN
+    const statusKey = `exam_status_${studentData.class}_${studentData.absentNo}`;
+    const hasTakenExam = localStorage.getItem(statusKey);
+
+    if (hasTakenExam) {
+      alert(`Siswa kelas ${studentData.class} No. Absen ${studentData.absentNo} sudah mengerjakan ujian ini. Kesempatan hanya 1 kali.`);
+      return;
+    }
+
+    // Acak soal saat mulai
+    const shuffledQuestions = shuffleArray([...QUESTION_BANK]);
+    setQuestions(shuffledQuestions);
+    setStep('exam');
+    startTimer();
+  };
+
+  const startTimer = () => {
+    setTimeLeft(30);
+    if (timerRef.current) clearInterval(timerRef.current);
+    timerRef.current = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          handleNextQuestion(true); // Auto next when time is up
+          return 30;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  const handleOptionSelect = (qId, optionIndex, type) => {
+    setAnswers(prev => {
+      const currentSelection = prev[qId] || [];
+      if (type === 'single') {
+        return { ...prev, [qId]: [optionIndex] };
+      } else {
+        // Complex (Checkbox) logic
+        if (currentSelection.includes(optionIndex)) {
+          return { ...prev, [qId]: currentSelection.filter(i => i !== optionIndex) };
+        } else {
+          return { ...prev, [qId]: [...currentSelection, optionIndex] };
+        }
+      }
+    });
+  };
+
+  const handleNextQuestion = (isAuto = false) => {
+    clearInterval(timerRef.current);
+    
+    // Check if finished
+    if (currentQIndex >= questions.length - 1) {
+      finishExam();
+    } else {
+      setCurrentQIndex(prev => prev + 1);
+      startTimer();
+    }
+  };
+
+  const finishExam = () => {
+    clearInterval(timerRef.current);
+    
+    // Calculate Score
+    let correctCount = 0;
+    let wrongCount = 0;
+
+    questions.forEach(q => {
+      const userAns = answers[q.id] || [];
+      const correctAns = q.correctAnswer;
+      
+      // Sort arrays to compare
+      const sortedUser = [...userAns].sort();
+      const sortedCorrect = [...correctAns].sort();
+
+      const isCorrect = JSON.stringify(sortedUser) === JSON.stringify(sortedCorrect);
+      
+      if (isCorrect) correctCount++;
+      else wrongCount++;
+    });
+
+    const finalScore = (correctCount / questions.length) * 100;
+
+    setExamResult({
+      score: finalScore,
+      correct: correctCount,
+      wrong: wrongCount
+    });
+
+    // SIMPAN STATUS SUDAH MENGERJAKAN KE LOCAL STORAGE
+    const statusKey = `exam_status_${studentData.class}_${studentData.absentNo}`;
+    localStorage.setItem(statusKey, 'done');
+
+    setStep('result');
+    
+    // Optional: Auto submit to google sheets here if URL provided
+    submitToGoogleSheets(finalScore, correctCount, wrongCount);
+  };
+
+  // --- INTEGRATIONS ---
+
+  const submitToGoogleSheets = (score, correct, wrong) => {
+    // Persiapkan data
+    const data = {
+      name: studentData.name,
+      class: studentData.class,
+      absentNo: studentData.absentNo,
+      parentPhone: studentData.parentPhone,
+      score: score,
+      correct: correct,
+      wrong: wrong
+    };
+    
+    // --- TEMPAT MENARUH URL APPS SCRIPT ---
+    // Ganti string kosong "" di bawah dengan URL Web App Anda
+    // Contoh: "https://script.google.com/macros/s/AKfycbx.../exec"
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx_Ik8ECsIY_2B2e_WLIZPsbZdn736pXXmj7y2MUROxgdxL2o7P9aXucvAvxFj7nBg/exec"; 
+
+    if (!GOOGLE_SCRIPT_URL) {
+      console.log("URL Google Script belum diisi. Data simulasi:", data);
+      return;
+    }
+
+    // Menggunakan mode: 'no-cors' adalah trik standar untuk form Google Script
+    // agar browser tidak memblokir request, meskipun response tidak bisa dibaca.
+    fetch(GOOGLE_SCRIPT_URL, {
+      method: 'POST',
+      mode: 'no-cors', 
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data)
+    })
+    .then(() => {
+      console.log("Data berhasil dikirim ke Spreadsheet (Background Process)");
+    })
+    .catch((error) => {
+      console.error("Gagal mengirim ke Spreadsheet:", error);
+    });
+  };
+
+  const sendToWhatsApp = () => {
+    const phone = studentData.parentPhone.replace(/^0/, '62').replace(/\D/g,'');
+    const message = `
+*Laporan Hasil Ujian Informatika*
+---------------------------
+Nama: ${studentData.name}
+Kelas: ${studentData.class}
+No. Absen: ${studentData.absentNo}
+---------------------------
+Nilai: *${examResult.score.toFixed(2)}*
+Benar: ${examResult.correct}
+Salah: ${examResult.wrong}
+---------------------------
+_Terima kasih telah mengikuti ujian._
+`.trim();
+    
+    const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+    window.open(url, '_blank');
+  };
+
+  // --- RENDERERS ---
+
+  if (step === 'intro') {
+    return (
+      <div className="min-h-screen bg-gray-50 font-sans text-gray-800 p-4 md:p-8">
+        <div className="max-w-4xl mx-auto bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-200">
+          <div className="bg-blue-600 p-6 text-white text-center">
+            <h1 className="text-3xl font-bold mb-2">UJIAN INFORMATIKA KELAS 7</h1>
+            <p className="opacity-90">Materi: Jaringan Komputer & Internet</p>
+            {/* Indikator Jadwal */}
+            {!isExamOpen && (
+              <div className="mt-4 bg-yellow-500 text-yellow-900 inline-block px-4 py-1 rounded-full text-sm font-semibold">
+                ⏳ Ujian dibuka dalam: {timeRemaining}
+              </div>
+            )}
+            {isExamOpen && (
+              <div className="mt-4 bg-green-500 text-white inline-block px-4 py-1 rounded-full text-sm font-semibold">
+                ✅ Ujian Sedang Berlangsung
+              </div>
+            )}
+          </div>
+
+          <div className="p-6 md:p-8 space-y-8">
+            {/* Materi Singkat */}
+            <section className="bg-blue-50 p-6 rounded-xl border border-blue-100">
+              <h2 className="flex items-center text-xl font-bold text-blue-800 mb-4">
+                <BookOpen className="w-6 h-6 mr-2" /> Rangkuman Materi Singkat
+              </h2>
+              <div className="grid md:grid-cols-2 gap-6 text-sm">
+                <div>
+                  <h3 className="font-bold text-blue-700 mb-1 flex items-center"><Network className="w-4 h-4 mr-1"/> Pengertian & Tipe</h3>
+                  <p className="mb-2"><strong>Jaringan Komputer:</strong> Kumpulan komputer yang terhubung untuk berbagi data dan sumber daya.</p>
+                  <ul className="list-disc pl-5 space-y-1 text-gray-600">
+                    <li><strong>LAN (Local):</strong> Jaringan area kecil (sekolah, lab).</li>
+                    <li><strong>MAN (Metropolitan):</strong> Antar gedung dalam satu kota.</li>
+                    <li><strong>WAN (Wide):</strong> Antar negara/benua.</li>
+                  </ul>
+                </div>
+                <div>
+                  <h3 className="font-bold text-blue-700 mb-1 flex items-center"><Globe className="w-4 h-4 mr-1"/> Koneksi & Internet</h3>
+                  <ul className="list-disc pl-5 space-y-1 text-gray-600">
+                    <li><strong>Wired:</strong> Fiber Optik (Cepat, cahaya), UTP (Tembaga).</li>
+                    <li><strong>Wireless:</strong> Wi-Fi, Bluetooth, Satelit (VSAT).</li>
+                    <li><strong>ISP:</strong> Penyedia jasa internet.</li>
+                  </ul>
+                </div>
+                <div>
+                  <h3 className="font-bold text-blue-700 mb-1 flex items-center"><Shield className="w-4 h-4 mr-1"/> Keamanan Data</h3>
+                  <ul className="list-disc pl-5 space-y-1 text-gray-600">
+                    <li><strong>Enkripsi:</strong> Mengubah data jadi kode acak.</li>
+                    <li><strong>Firewall:</strong> Menyaring lalu lintas jaringan.</li>
+                    <li><strong>Phishing:</strong> Penipuan link palsu untuk curi data.</li>
+                  </ul>
+                </div>
+              </div>
+            </section>
+
+            {/* Kisi Kisi */}
+            <section className="bg-gray-50 p-6 rounded-xl border border-gray-200">
+              <h2 className="flex items-center text-xl font-bold text-gray-800 mb-4">
+                <FileText className="w-6 h-6 mr-2" /> Kisi-Kisi Soal (25 Soal)
+              </h2>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm text-left border-collapse">
+                  <thead>
+                    <tr className="bg-gray-200 text-gray-700">
+                      <th className="p-2 border">No</th>
+                      <th className="p-2 border">Materi</th>
+                      <th className="p-2 border">Level Kognitif</th>
+                      <th className="p-2 border">Jumlah</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr><td className="p-2 border">1</td><td className="p-2 border">Pengertian Dasar & Topologi</td><td className="p-2 border">C1 - C3</td><td className="p-2 border">5 Soal</td></tr>
+                    <tr><td className="p-2 border">2</td><td className="p-2 border">Tipe Jaringan (LAN/MAN/WAN)</td><td className="p-2 border">C3 - C4</td><td className="p-2 border">5 Soal</td></tr>
+                    <tr><td className="p-2 border">3</td><td className="p-2 border">Jenis Koneksi (Wired/Wireless)</td><td className="p-2 border">C2 - C5</td><td className="p-2 border">5 Soal</td></tr>
+                    <tr><td className="p-2 border">4</td><td className="p-2 border">Enkripsi & Keamanan</td><td className="p-2 border">C1 - C4</td><td className="p-2 border">5 Soal</td></tr>
+                    <tr><td className="p-2 border">5</td><td className="p-2 border">Proteksi & Analisis Masalah</td><td className="p-2 border">C4 - C6</td><td className="p-2 border">5 Soal</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            <div className="text-center mt-8">
+              <button 
+                onClick={() => setStep('form')}
+                className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition transform hover:scale-105"
+              >
+                Lanjut ke Data Diri
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (step === 'form') {
+    return (
+      <div className="min-h-screen bg-blue-50 flex items-center justify-center p-4">
+        <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md border-t-4 border-blue-600 relative">
+          <h2 className="text-2xl font-bold text-center mb-6 text-gray-800">Identitas Peserta</h2>
+          
+          {/* Banner Peringatan Satu Kali Ujian */}
+          <div className="bg-yellow-50 border-l-4 border-yellow-400 p-3 mb-4 text-xs text-yellow-700">
+            <p className="font-bold flex items-center"><Lock className="w-3 h-3 mr-1"/> PERHATIAN:</p>
+            <p>Ujian hanya dapat dikerjakan <strong>SATU KALI</strong>. Pastikan data benar sebelum memulai.</p>
+          </div>
+
+          <form onSubmit={handleStartExam} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap</label>
+              <input 
+                required 
+                type="text" 
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                value={studentData.name}
+                onChange={e => setStudentData({...studentData, name: e.target.value})}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Kelas</label>
+                <select 
+                  required
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  value={studentData.class}
+                  onChange={e => setStudentData({...studentData, class: e.target.value})}
+                >
+                  <option value="">Pilih...</option>
+                  <option value="7A">7A</option>
+                  <option value="7B">7B</option>
+                  <option value="7C">7C</option>
+                  <option value="7D">7D</option>
+                  <option value="7E">7E</option>
+                  <option value="7F">7F</option>
+                  <option value="7G">7G</option>
+                  <option value="8A">8A</option>
+                  <option value="8B">8B</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">No. Absen</label>
+                <input 
+                  required 
+                  type="number" 
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  value={studentData.absentNo}
+                  onChange={e => setStudentData({...studentData, absentNo: e.target.value})}
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">No. HP Orang Tua (WA)</label>
+              <input 
+                required 
+                type="tel" 
+                placeholder="0812..."
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                value={studentData.parentPhone}
+                onChange={e => setStudentData({...studentData, parentPhone: e.target.value})}
+              />
+              <p className="text-xs text-gray-500 mt-1">*Hasil ujian akan dikirim ke nomor ini.</p>
+            </div>
+            
+            <button 
+              type="submit"
+              disabled={!isExamOpen}
+              className={`w-full font-bold py-3 rounded-lg shadow mt-4 transition flex items-center justify-center
+                ${isExamOpen 
+                  ? 'bg-green-600 hover:bg-green-700 text-white cursor-pointer' 
+                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}
+            >
+              {isExamOpen ? "Mulai Ujian" : "Ujian Belum Dibuka"}
+              {!isExamOpen && <Lock className="w-4 h-4 ml-2" />}
+            </button>
+            {!isExamOpen && (
+              <p className="text-center text-xs text-red-500 mt-2">
+                Jadwal: {JADWAL_UJIAN.toLocaleString('id-ID')}
+              </p>
+            )}
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+  if (step === 'exam') {
+    const currentQ = questions[currentQIndex];
+    if (!currentQ) return <div>Loading...</div>;
+
+    return (
+      <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center p-4">
+        <div className="w-full max-w-3xl bg-white rounded-2xl shadow-xl overflow-hidden">
+          {/* Header Ujian */}
+          <div className="bg-gray-800 text-white p-4 flex justify-between items-center">
+            <div>
+              <span className="text-gray-400 text-sm">Soal {currentQIndex + 1} dari 25</span>
+              <div className="font-bold text-lg text-blue-300">{currentQ.type === 'complex' ? 'Pilihan Ganda Kompleks (Lebih dari 1 jawaban)' : 'Pilihan Ganda Tunggal'}</div>
+            </div>
+            <div className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-mono font-bold text-xl ${timeLeft <= 10 ? 'bg-red-600 animate-pulse' : 'bg-blue-600'}`}>
+              <Clock className="w-5 h-5" />
+              <span>{timeLeft}s</span>
+            </div>
+          </div>
+
+          {/* Konten Soal */}
+          <div className="p-6 md:p-8">
+            <h3 className="text-xl font-medium mb-6 leading-relaxed text-gray-800">
+              {currentQ.question}
+            </h3>
+
+            <div className="space-y-3">
+              {currentQ.options.map((opt, idx) => {
+                const isSelected = (answers[currentQ.id] || []).includes(idx);
+                return (
+                  <div 
+                    key={idx}
+                    onClick={() => handleOptionSelect(currentQ.id, idx, currentQ.type)}
+                    className={`p-4 border-2 rounded-xl cursor-pointer transition flex items-center
+                      ${isSelected ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-blue-300'}
+                    `}
+                  >
+                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center mr-3
+                      ${currentQ.type === 'single' ? 'rounded-full' : 'rounded-md'}
+                      ${isSelected ? 'bg-blue-500 border-blue-500' : 'border-gray-300'}
+                    `}>
+                      {isSelected && <div className="w-2 h-2 bg-white rounded-full"></div>}
+                    </div>
+                    <span className="text-gray-700">{opt}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Footer Navigasi */}
+          <div className="bg-gray-50 p-4 border-t border-gray-200 flex justify-end">
+            <button 
+              onClick={() => handleNextQuestion(false)}
+              className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-6 rounded-lg font-semibold flex items-center"
+            >
+              {currentQIndex === 24 ? "Selesai" : "Selanjutnya"}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (step === 'result') {
+    return (
+      <div className="min-h-screen bg-green-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-lg w-full text-center">
+          <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <CheckCircle className="w-10 h-10 text-green-600" />
+          </div>
+          
+          <h2 className="text-3xl font-bold text-gray-800 mb-2">Ujian Selesai!</h2>
+          <p className="text-gray-500 mb-6">Terima kasih {studentData.name}, berikut hasil kerjamu:</p>
+
+          <div className="bg-gray-100 rounded-xl p-6 mb-8">
+            <div className="text-5xl font-bold text-blue-600 mb-2">{examResult.score.toFixed(0)}</div>
+            <div className="text-sm text-gray-500 uppercase tracking-wide">Nilai Akhir</div>
+            
+            <div className="flex justify-center space-x-8 mt-6">
+              <div>
+                <div className="text-xl font-bold text-green-600">{examResult.correct}</div>
+                <div className="text-xs text-gray-500">Benar</div>
+              </div>
+              <div>
+                <div className="text-xl font-bold text-red-500">{examResult.wrong}</div>
+                <div className="text-xs text-gray-500">Salah</div>
+              </div>
+            </div>
+          </div>
+
+          <button 
+            onClick={sendToWhatsApp}
+            className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-lg shadow-lg flex items-center justify-center transition mb-4"
+          >
+            <Send className="w-5 h-5 mr-2" />
+            Kirim Laporan ke WA Orang Tua
+          </button>
+          
+          <p className="text-xs text-gray-400">
+            Pastikan pop-up tidak diblokir untuk membuka WhatsApp.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return null;
+}
